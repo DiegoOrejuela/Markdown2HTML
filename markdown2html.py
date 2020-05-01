@@ -18,8 +18,8 @@ if __name__ == "__main__":
     from os import path
 
     if len(sys.argv) < 2:
-        error_mssg = "Usage: {} README.md README.html\n"
-        sys.stderr.write(error_mssg.format(sys.argv[0]))
+        error_mssg = "Usage: ./markdown2html.py README.md README.html\n"
+        sys.stderr.write(error_mssg)
         exit(1)
     else:
         if path.exists(sys.argv[1]):

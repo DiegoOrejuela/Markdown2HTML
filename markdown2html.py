@@ -17,7 +17,7 @@ if __name__ == "__main__":
     import sys
     from os import path
 
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3:
         error_mssg = "Usage: ./markdown2html.py README.md README.html\n"
         sys.stderr.write(error_mssg)
         exit(1)

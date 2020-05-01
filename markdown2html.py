@@ -22,7 +22,8 @@ if __name__ == "__main__":
         sys.stderr.write(error_mssg)
         exit(1)
     else:
-        if path.exists(sys.argv[1]) and path.isfile(sys.argv[1]):
+        if path.exists(sys.argv[1]) and \
+            path.isfile(sys.argv[1]) and sys.argv[1].endswith('.md'):
             exit(0)
         else:
             sys.stderr.write("Missing {}\n".format(sys.argv[1]))

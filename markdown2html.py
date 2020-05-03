@@ -166,6 +166,51 @@ def database():
           },
           "type": "list"
         }
+      },
+      {
+        "markdown": {
+          "code": "",
+          "type": "",
+          "code_subelement": "text"
+        },
+        "html": {
+          "name": "p",
+          "tags": {
+            "init": "<p>",
+            "end": "</p>"
+          },
+          "type": "paragraph"
+        }
+      },
+      {
+        "markdown": {
+          "code": "text",
+          "type": "",
+          "code_subelement": ""
+        },
+        "html": {
+          "name": "text",
+          "tags": {
+            "init": "",
+            "end": ""
+          },
+          "type": "text"
+        }
+      },
+      {
+        "markdown": {
+          "code": "breakline",
+          "type": "",
+          "code_subelement": ""
+        },
+        "html": {
+          "name": "br",
+          "tags": {
+            "init": "<br/>",
+            "end": ""
+          },
+          "type": "breakline"
+        }
       }
     ]
 
@@ -185,9 +230,9 @@ def generate_file_html(path_file, lines):
 
 
 def converter_string_by_line(content, convertions_queue):
-    special_elements = ["-", "*"]
+    special_elements = ["-", "*", "text"]
     macro_element = None
-
+    # import pdb; pdb.set_trace()
     string_converted = content
     for convertion in convertions_queue:
         if convertion["match"]:
@@ -210,7 +255,6 @@ def converter_string_by_line(content, convertions_queue):
 
 
 def converter_markdown_at_beginning(init_string):
-
     convertion = None
     at_beginning_elements = filter(
         lambda element: element['markdown']["type"] == "at_beginning",
@@ -219,12 +263,24 @@ def converter_markdown_at_beginning(init_string):
 
     for element in at_beginning_elements:
         # import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         if init_string == element["markdown"]["code"]:
             convertion = {
               "element": element,
               "match": None
             }
-            break
+
+    if not convertion:
+        convertion = {
+                "element": list(
+                  filter(
+                    lambda element: element["html"]["name"] == "text",
+                    database()["elements"]
+                  )
+                )[0],
+                "match": None
+              }
+
     return convertion
 
 
@@ -245,6 +301,21 @@ def parser_to_html_multiples_lines(lines, convertions_multiple_lines):
         next_convertion = dict(
           enumerate(convertions_multiple_lines)
           ).get(index + 1)
+        # import pdb; pdb.set_trace()
+        if convertion["macro_element"]["html"]["name"] == "p" and \
+            next_convertion and \
+                next_convertion["macro_element"]["html"]["name"] == "p":
+            lines.insert(
+              convertion["number_line"] + running_lines + 1,
+              list(
+                filter(
+                  lambda element: element["html"]["name"] == "br",
+                  database()["elements"]
+                )
+              )[0]["html"]["tags"]["init"] + '\n'
+            )
+            running_lines += 1
+
         if not next_convertion or \
             next_convertion["macro_element"]["html"]["name"] != \
             convertion["macro_element"]["html"]["name"] or \
@@ -274,7 +345,9 @@ def parser_to_html(string):
         if type["name"] == "at_beginning":
             convertion = converter_markdown_at_beginning(string_parts[0])
             convertions_queue.append(convertion) if convertion else None
-            if len(convertions_queue) == 1:
+            # import pdb; pdb.set_trace()
+            if len(convertions_queue) == 1 and \
+                    convertions_queue[0]["element"]["html"]["name"] != "text":
                 content = string_parts[1] if len(string_parts) > 1 else ""
 
         if content:
@@ -310,6 +383,7 @@ def markdown2html(markdown_file_path, html_file_path):
                   }
                 )
             number_line += 1
+    # import pdb; pdb.set_trace()
     if len(convertions_queue_multiples_lines) > 0:
         converted_lines = parser_to_html_multiples_lines(
           converted_lines,

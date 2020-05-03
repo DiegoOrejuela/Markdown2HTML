@@ -34,6 +34,36 @@ def database():
     elements = [
       {
         "markdown": {
+          "code": "__.+__",
+          "type": "in_content",
+          "code_subelement": ""
+        },
+        "html": {
+          "name": "em",
+          "tags": {
+            "init": "<em>",
+            "end": "</em>"
+          },
+          "type": "mark_text"
+        }
+      },
+      {
+        "markdown": {
+          "code": "\*\*.+\*\*",
+          "type": "in_content",
+          "code_subelement": ""
+        },
+        "html": {
+          "name": "b",
+          "tags": {
+            "init": "<b>",
+            "end": "</b>"
+          },
+          "type": "mark_text"
+        }
+      },
+      {
+        "markdown": {
           "code": "#",
           "type": "at_beginning",
           "code_subelement": ""
@@ -334,6 +364,29 @@ def parser_to_html_multiples_lines(lines, convertions_multiple_lines):
     return lines
 
 
+def converter_markdown_in_content(content):
+    import re
+
+    string = content
+    in_content_elements = filter(
+            lambda element: element['markdown']["type"] == "in_content",
+            database()["elements"]
+          )
+
+    for element in in_content_elements:
+        match = re.search(element["markdown"]["code"], string)
+        while match:
+            string_init = string[:match.start()] if match.start() != 0 else ""
+            string = string_init + \
+                element["html"]["tags"]["init"] + \
+                string[match.start() + 2: match.end() - 2] + \
+                element["html"]["tags"]["end"] + \
+                string[match.end():]
+
+            match = re.search(element["markdown"]["code"], string)
+    return string
+
+
 def parser_to_html(string):
 
     types = database()["types"]
@@ -351,12 +404,8 @@ def parser_to_html(string):
                 content = string_parts[1] if len(string_parts) > 1 else ""
 
         if content:
-            if type["name"] == "only_content":
-                pass
-                # convertions_queue = converter_markdown_only_content(content)
-            elif type["name"] == "in_content":
-                pass
-                # convertions_queue = converter_markdown_in_content(content)
+            if type["name"] == "in_content":
+                content = converter_markdown_in_content(content)
 
     return converter_string_by_line(content, convertions_queue)
 

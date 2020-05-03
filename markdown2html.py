@@ -139,6 +139,21 @@ def database():
       },
       {
         "markdown": {
+          "code": "######",
+          "type": "at_beginning",
+          "code_subelement": ""
+        },
+        "html": {
+          "name": "h6",
+          "tags": {
+            "init": "<h6>",
+            "end": "</h6>"
+          },
+          "type": "headings"
+        }
+      },
+      {
+        "markdown": {
           "code": "-",
           "type": "at_beginning",
           "code_subelement": ""

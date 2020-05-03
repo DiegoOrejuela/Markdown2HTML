@@ -38,7 +38,7 @@ def database():
           "type": "at_beginning",
           "code_subelement": ""
         },
-        "html_generated": {
+        "html": {
           "name": "h1",
           "tags": {
             "init": "<h1>",
@@ -53,7 +53,7 @@ def database():
           "type": "at_beginning",
           "code_subelement": ""
         },
-        "html_generated": {
+        "html": {
           "name": "h2",
           "tags": {
             "init": "<h2>",
@@ -68,7 +68,7 @@ def database():
           "type": "at_beginning",
           "code_subelement": ""
         },
-        "html_generated": {
+        "html": {
           "name": "h3",
           "tags": {
             "init": "<h3>",
@@ -83,7 +83,7 @@ def database():
           "type": "at_beginning",
           "code_subelement": ""
         },
-        "html_generated": {
+        "html": {
           "name": "h4",
           "tags": {
             "init": "<h4>",
@@ -98,7 +98,7 @@ def database():
           "type": "at_beginning",
           "code_subelement": ""
         },
-        "html_generated": {
+        "html": {
           "name": "h5",
           "tags": {
             "init": "<h5>",
@@ -113,7 +113,7 @@ def database():
           "type": "at_beginning",
           "code_subelement": ""
         },
-        "html_generated": {
+        "html": {
           "name": "li",
           "tags": {
             "init": "<li>",
@@ -128,7 +128,7 @@ def database():
           "type": "at_beginning",
           "code_subelement": ""
         },
-        "html_generated": {
+        "html": {
           "name": "li",
           "tags": {
             "init": "<li>",
@@ -143,7 +143,7 @@ def database():
           "type": "",
           "code_subelement": "-"
         },
-        "html_generated": {
+        "html": {
           "name": "ul",
           "tags": {
             "init": "<ul>",
@@ -158,7 +158,7 @@ def database():
           "type": "",
           "code_subelement": "*"
         },
-        "html_generated": {
+        "html": {
           "name": "ol",
           "tags": {
             "init": "<ol>",
@@ -202,9 +202,9 @@ def converter_string_by_line(content, convertions_queue):
                 ))[0]
 
             string_converted = "{}{}{}\n".format(
-              convertion["element"]["html_generated"]["tags"]["init"],
+              convertion["element"]["html"]["tags"]["init"],
               string_converted,
-              convertion["element"]["html_generated"]["tags"]["end"])
+              convertion["element"]["html"]["tags"]["end"])
 
     return macro_element, string_converted
 
@@ -231,11 +231,12 @@ def converter_markdown_at_beginning(init_string):
 def parser_to_html_multiples_lines(lines, convertions_multiple_lines):
     convertion_started = False
     running_lines = 0
+    # import pdb; pdb.set_trace()
     for index, convertion in enumerate(convertions_multiple_lines):
         if not convertion_started:
             lines.insert(
               convertion["number_line"] + running_lines,
-              convertion["macro_element"]["html_generated"]["tags"]["init"] +
+              convertion["macro_element"]["html"]["tags"]["init"] +
               '\n'
             )
             convertion_started = True
@@ -245,15 +246,15 @@ def parser_to_html_multiples_lines(lines, convertions_multiple_lines):
           enumerate(convertions_multiple_lines)
           ).get(index + 1)
         if not next_convertion or \
-            next_convertion["macro_element"]["markdown"]["code"] != \
-            convertion["macro_element"]["markdown"]["code"] or \
+            next_convertion["macro_element"]["html"]["name"] != \
+            convertion["macro_element"]["html"]["name"] or \
             (
-              next_convertion["macro_element"]["markdown"]["code"] ==
-              convertion["macro_element"]["markdown"]["code"] and
+              next_convertion["macro_element"]["html"]["name"] ==
+              convertion["macro_element"]["html"]["name"] and
               convertion["number_line"] + 1 != next_convertion["number_line"]):
             lines.insert(
               convertion["number_line"] + running_lines + 1,
-              convertion["macro_element"]["html_generated"]["tags"]["end"] +
+              convertion["macro_element"]["html"]["tags"]["end"] +
               '\n'
             )
             convertion_started = False

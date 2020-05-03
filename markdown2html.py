@@ -349,7 +349,9 @@ def parser_to_html_multiples_lines(lines, convertions_multiple_lines):
         # import pdb; pdb.set_trace()
         if convertion["macro_element"]["html"]["name"] == "p" and \
             next_convertion and \
-                next_convertion["macro_element"]["html"]["name"] == "p":
+                next_convertion["macro_element"]["html"]["name"] == "p" and \
+                convertion["index_line"] + 1 == next_convertion["index_line"]:
+            # import pdb; pdb.set_trace()
             lines.insert(
               convertion["number_line"] + running_lines + 1,
               list(
@@ -363,11 +365,8 @@ def parser_to_html_multiples_lines(lines, convertions_multiple_lines):
 
         if not next_convertion or \
             next_convertion["macro_element"]["html"]["name"] != \
-            convertion["macro_element"]["html"]["name"] or \
-            (
-              next_convertion["macro_element"]["html"]["name"] ==
-              convertion["macro_element"]["html"]["name"] and
-              convertion["number_line"] + 1 != next_convertion["number_line"]):
+                convertion["macro_element"]["html"]["name"]:
+
             lines.insert(
               convertion["number_line"] + running_lines + 1,
               convertion["macro_element"]["html"]["tags"]["end"] +
@@ -375,6 +374,29 @@ def parser_to_html_multiples_lines(lines, convertions_multiple_lines):
             )
             convertion_started = False
             running_lines += 1
+
+        elif next_convertion["macro_element"]["html"]["name"] == \
+                convertion["macro_element"]["html"]["name"]:
+            if convertion["macro_element"]["html"]["name"] == 'p':
+                if convertion["index_line"] + 1 != \
+                      next_convertion["index_line"]:
+                    lines.insert(
+                      convertion["number_line"] + running_lines + 1,
+                      convertion["macro_element"]["html"]["tags"]["end"] +
+                      '\n'
+                    )
+                    convertion_started = False
+                    running_lines += 1
+
+            elif convertion["number_line"] + 1 != \
+                    next_convertion["number_line"]:
+                lines.insert(
+                    convertion["number_line"] + running_lines + 1,
+                    convertion["macro_element"]["html"]["tags"]["end"] +
+                    '\n'
+                  )
+                convertion_started = False
+                running_lines += 1
 
     return lines
 
@@ -433,7 +455,7 @@ def markdown2html(markdown_file_path, html_file_path):
 
     file = open(markdown_file_path, "r")
 
-    for line in file:
+    for index, line in enumerate(file):
         if line != "\n":
             line_formattted = line.replace('\n', "")
             macro_element, html_parsed_line = parser_to_html(line_formattted)
@@ -443,7 +465,8 @@ def markdown2html(markdown_file_path, html_file_path):
                 convertions_queue_multiples_lines.append(
                   {
                     "number_line": number_line,
-                    "macro_element": macro_element
+                    "macro_element": macro_element,
+                    "index_line": index
                   }
                 )
             number_line += 1

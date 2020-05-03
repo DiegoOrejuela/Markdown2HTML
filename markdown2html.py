@@ -34,6 +34,36 @@ def database():
     elements = [
       {
         "markdown": {
+          "code": "\(\(.+\)\)",
+          "type": "in_content",
+          "code_subelement": ""
+        },
+        "html": {
+          "name": "",
+          "tags": {
+            "init": "",
+            "end": ""
+          },
+          "type": "mark_text"
+        }
+      },
+      {
+        "markdown": {
+          "code": "\[\[.+\]\]",
+          "type": "in_content",
+          "code_subelement": ""
+        },
+        "html": {
+          "name": "",
+          "tags": {
+            "init": "",
+            "end": ""
+          },
+          "type": "mark_text"
+        }
+      },
+      {
+        "markdown": {
           "code": "__.+__",
           "type": "in_content",
           "code_subelement": ""
@@ -405,18 +435,29 @@ def converter_markdown_in_content(content):
     import re
 
     string = content
-    in_content_elements = filter(
+    in_content_elements = list(filter(
             lambda element: element['markdown']["type"] == "in_content",
             database()["elements"]
-          )
-
+          ))
+    # import pdb; pdb.set_trace()
     for element in in_content_elements:
+        # import pdb; pdb.set_trace()
         match = re.search(element["markdown"]["code"], string)
         while match:
+            content_string = string[match.start() + 2: match.end() - 2]
+            if element["markdown"]["code"] == "\(\(.+\)\)":
+                content_string = re.sub("[Cc]", "", content_string)
+            elif element["markdown"]["code"] == "\[\[.+\]\]":
+                import hashlib
+                # import pdb; pdb.set_trace()
+                md5 = hashlib.md5()
+                md5.update(content_string.encode('utf-8'))
+                content_string = md5.hexdigest()
+
             string_init = string[:match.start()] if match.start() != 0 else ""
             string = string_init + \
                 element["html"]["tags"]["init"] + \
-                string[match.start() + 2: match.end() - 2] + \
+                content_string + \
                 element["html"]["tags"]["end"] + \
                 string[match.end():]
 

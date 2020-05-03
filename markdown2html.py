@@ -35,9 +35,11 @@ def database():
       {
         "markdown": {
           "code": "#",
-          "type": "at_beginning"
+          "type": "at_beginning",
+          "code_subelement": ""
         },
         "html_generated": {
+          "name": "h1",
           "tags": {
             "init": "<h1>",
             "end": "</h1>"
@@ -48,9 +50,11 @@ def database():
       {
         "markdown": {
           "code": "##",
-          "type": "at_beginning"
+          "type": "at_beginning",
+          "code_subelement": ""
         },
         "html_generated": {
+          "name": "h2",
           "tags": {
             "init": "<h2>",
             "end": "</h2>"
@@ -61,9 +65,11 @@ def database():
       {
         "markdown": {
           "code": "###",
-          "type": "at_beginning"
+          "type": "at_beginning",
+          "code_subelement": ""
         },
         "html_generated": {
+          "name": "h3",
           "tags": {
             "init": "<h3>",
             "end": "</h3>"
@@ -74,9 +80,11 @@ def database():
       {
         "markdown": {
           "code": "####",
-          "type": "at_beginning"
+          "type": "at_beginning",
+          "code_subelement": ""
         },
         "html_generated": {
+          "name": "h4",
           "tags": {
             "init": "<h4>",
             "end": "</h4>"
@@ -87,14 +95,76 @@ def database():
       {
         "markdown": {
           "code": "#####",
-          "type": "at_beginning"
+          "type": "at_beginning",
+          "code_subelement": ""
         },
         "html_generated": {
+          "name": "h5",
           "tags": {
             "init": "<h5>",
             "end": "</h5>"
           },
           "type": "headings"
+        }
+      },
+      {
+        "markdown": {
+          "code": "-",
+          "type": "at_beginning",
+          "code_subelement": ""
+        },
+        "html_generated": {
+          "name": "li",
+          "tags": {
+            "init": "<li>",
+            "end": "</li>"
+          },
+          "type": "element_list"
+        }
+      },
+      {
+        "markdown": {
+          "code": "*",
+          "type": "at_beginning",
+          "code_subelement": ""
+        },
+        "html_generated": {
+          "name": "li",
+          "tags": {
+            "init": "<li>",
+            "end": "</li>"
+          },
+          "type": "element_list"
+        }
+      },
+      {
+        "markdown": {
+          "code": "",
+          "type": "",
+          "code_subelement": "-"
+        },
+        "html_generated": {
+          "name": "ul",
+          "tags": {
+            "init": "<ul>",
+            "end": "</ul>"
+          },
+          "type": "list"
+        }
+      },
+      {
+        "markdown": {
+          "code": "",
+          "type": "",
+          "code_subelement": "*"
+        },
+        "html_generated": {
+          "name": "ol",
+          "tags": {
+            "init": "<ol>",
+            "end": "</ol>"
+          },
+          "type": "list"
         }
       }
     ]
@@ -115,17 +185,28 @@ def generate_file_html(path_file, lines):
 
 
 def converter_string_by_line(content, convertions_queue):
+    special_elements = ["-", "*"]
+    macro_element = None
+
     string_converted = content
     for convertion in convertions_queue:
         if convertion["match"]:
             pass
         else:
+            code = convertion["element"]["markdown"]["code"]
+            if code in special_elements:
+                macro_element = list(filter(
+                    lambda element:
+                        element["markdown"]["code_subelement"] == code,
+                        database()["elements"]
+                ))[0]
+
             string_converted = "{}{}{}\n".format(
               convertion["element"]["html_generated"]["tags"]["init"],
               string_converted,
               convertion["element"]["html_generated"]["tags"]["end"])
 
-    return string_converted
+    return macro_element, string_converted
 
 
 def converter_markdown_at_beginning(init_string):
@@ -143,7 +224,42 @@ def converter_markdown_at_beginning(init_string):
               "element": element,
               "match": None
             }
+            break
     return convertion
+
+
+def parser_to_html_multiples_lines(lines, convertions_multiple_lines):
+    convertion_started = False
+    running_lines = 0
+    for index, convertion in enumerate(convertions_multiple_lines):
+        if not convertion_started:
+            lines.insert(
+              convertion["number_line"] + running_lines,
+              convertion["macro_element"]["html_generated"]["tags"]["init"] +
+              '\n'
+            )
+            convertion_started = True
+            running_lines += 1
+
+        next_convertion = dict(
+          enumerate(convertions_multiple_lines)
+          ).get(index + 1)
+        if not next_convertion or \
+            next_convertion["macro_element"]["markdown"]["code"] != \
+            convertion["macro_element"]["markdown"]["code"] or \
+            (
+              next_convertion["macro_element"]["markdown"]["code"] ==
+              convertion["macro_element"]["markdown"]["code"] and
+              convertion["number_line"] + 1 != next_convertion["number_line"]):
+            lines.insert(
+              convertion["number_line"] + running_lines + 1,
+              convertion["macro_element"]["html_generated"]["tags"]["end"] +
+              '\n'
+            )
+            convertion_started = False
+            running_lines += 1
+
+    return lines
 
 
 def parser_to_html(string):
@@ -168,22 +284,36 @@ def parser_to_html(string):
                 pass
                 # convertions_queue = converter_markdown_in_content(content)
 
-    string_converted = converter_string_by_line(content, convertions_queue)
-
-    return string_converted
+    return converter_string_by_line(content, convertions_queue)
 
 
 def markdown2html(markdown_file_path, html_file_path):
 
     converted_lines = []
+    convertions_queue_multiples_lines = []
+    number_line = 0
 
     file = open(markdown_file_path, "r")
 
     for line in file:
         if line != "\n":
             line_formattted = line.replace('\n', "")
-            html_parsed_line = parser_to_html(line_formattted)
+            macro_element, html_parsed_line = parser_to_html(line_formattted)
             converted_lines.append(html_parsed_line)
+
+            if macro_element:
+                convertions_queue_multiples_lines.append(
+                  {
+                    "number_line": number_line,
+                    "macro_element": macro_element
+                  }
+                )
+            number_line += 1
+    if len(convertions_queue_multiples_lines) > 0:
+        converted_lines = parser_to_html_multiples_lines(
+          converted_lines,
+          convertions_queue_multiples_lines
+        )
 
     file.close()
 
